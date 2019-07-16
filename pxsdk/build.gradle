@@ -1,0 +1,150 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
+
+ext {
+    bintrayRepo = 'pixalate-android-sdk'
+    bintrayName = 'pxsdk'
+    userOrg = 'pixalate'
+
+    publishedGroupId = 'com.pixalate.pxsdk'
+    libraryName = 'pxsdk'
+    artifact = 'pxsdk'
+
+    libraryDescription = 'Pixalate SDK for easy integration in Android apps.'
+
+    siteUrl = 'https://github.com/Madgvox/pxsdk-temp'
+    gitUrl = 'https://github.com/Madgvox/pxsdk-temp.git'
+    githubRepository= 'Madgvox/pxsdk-temp'
+
+    libraryVersion = '0.1.1'
+
+    developerId = 'pixalate'
+    developerName = 'Nate Tessman'
+    developerEmail = 'nate@pixalate.com'
+
+    licenseName = 'The Apache Software License, Version 2.0' // tbd
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
+
+android {
+    compileSdkVersion 28
+
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    testImplementation 'junit:junit:4.12'
+}
+
+// from https://raw.githubusercontent.com/nisrulz/JCenter/master/bintrayv1.gradle
+// inlined due to lack of userOrg field
+version = libraryVersion
+
+if (project.hasProperty("android")) { // Android libraries
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from android.sourceSets.main.java.srcDirs
+    }
+
+    task javadoc(type: Javadoc) {
+        source = android.sourceSets.main.java.srcDirs
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    }
+} else { // Java libraries
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+// Bintray
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+//bintray {
+//    user = properties.getProperty("bintray.user")
+//    key = properties.getProperty("bintray.apikey")
+//
+//    configurations = ['archives']
+//    pkg {
+//        repo = bintrayRepo
+//        name = bintrayName
+//        userOrg = userOrg
+//        desc = libraryDescription
+//        websiteUrl = siteUrl
+//        issueTrackerUrl = siteUrl+'/issues'
+//        vcsUrl = gitUrl
+//        licenses = allLicenses
+//        githubRepo = githubRepository //Optional Github repository
+//        githubReleaseNotesFile = 'README.md' //Optional Github readme file
+//        publish = false
+//        publicDownloadNumbers = true
+//        version {
+//            desc = libraryDescription
+//            gpg {
+//                sign = true //Determines whether to GPG sign the files. The default is false
+//                passphrase = properties.getProperty("bintray.gpg.password")
+//                //Optional. The passphrase for GPG signing'
+//            }
+//        }
+//    }
+//}
+
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+
+    configurations = ['archives']
+    pkg {
+        repo = bintrayRepo
+        name = 'com.pixalate.pxsdk'
+        userOrg = userOrg
+        desc = libraryDescription
+        licenses = allLicenses
+        vcsUrl = gitUrl
+//        githubRepo = githubRepository //Optional Github repository
+//        githubReleaseNotesFile = 'README.md' //Optional Github readme file
+        version {
+            name = libraryVersion
+            desc = libraryDescription
+            gpg {
+                sign = true //Determines whether to GPG sign the files. The default is false
+                passphrase = properties.getProperty("bintray.gpg.password")
+                //Optional. The passphrase for GPG signing'
+            }
+        }
+    }
+}
+
+apply from: 'https://raw.githubusercontent.com/nisrulz/JCenter/master/installv1.gradle'
