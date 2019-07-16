@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
 
 ext {
     bintrayRepo = 'pixalate-android-sdk'
@@ -16,7 +17,7 @@ ext {
     gitUrl = 'https://github.com/Madgvox/pxsdk-temp.git'
     githubRepository= 'Madgvox/pxsdk-temp'
 
-    libraryVersion = '0.1.1'
+    libraryVersion = '0.2.0'
 
     developerId = 'pixalate'
     developerName = 'Nate Tessman'
@@ -36,7 +37,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName libraryVersion
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -61,21 +62,14 @@ dependencies {
 // inlined due to lack of userOrg field
 version = libraryVersion
 
-if (project.hasProperty("android")) { // Android libraries
-    task sourcesJar(type: Jar) {
-        classifier = 'sources'
-        from android.sourceSets.main.java.srcDirs
-    }
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
 
-    task javadoc(type: Javadoc) {
-        source = android.sourceSets.main.java.srcDirs
-        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-    }
-} else { // Java libraries
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
-    }
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -92,49 +86,23 @@ artifacts {
 Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
-//bintray {
-//    user = properties.getProperty("bintray.user")
-//    key = properties.getProperty("bintray.apikey")
-//
-//    configurations = ['archives']
-//    pkg {
-//        repo = bintrayRepo
-//        name = bintrayName
-//        userOrg = userOrg
-//        desc = libraryDescription
-//        websiteUrl = siteUrl
-//        issueTrackerUrl = siteUrl+'/issues'
-//        vcsUrl = gitUrl
-//        licenses = allLicenses
-//        githubRepo = githubRepository //Optional Github repository
-//        githubReleaseNotesFile = 'README.md' //Optional Github readme file
-//        publish = false
-//        publicDownloadNumbers = true
-//        version {
-//            desc = libraryDescription
-//            gpg {
-//                sign = true //Determines whether to GPG sign the files. The default is false
-//                passphrase = properties.getProperty("bintray.gpg.password")
-//                //Optional. The passphrase for GPG signing'
-//            }
-//        }
-//    }
-//}
-
 bintray {
     user = properties.getProperty("bintray.user")
     key = properties.getProperty("bintray.apikey")
 
     configurations = ['archives']
     pkg {
-        repo = 'pixalate-android-sdk'
-        name = 'com.pixalate.pxsdk'
-        userOrg = 'pixalate'
+        repo = bintrayRepo
+        name = publishedGroupId
+        userOrg = 'pixalate' // @bug: for some reason I can't get away with using the ext variable here
         desc = libraryDescription
         licenses = allLicenses
         vcsUrl = gitUrl
+        publish = true
+//        websiteUrl = siteUrl
 //        githubRepo = githubRepository //Optional Github repository
 //        githubReleaseNotesFile = 'README.md' //Optional Github readme file
+//        publicDownloadNumbers = false
         version {
             name = libraryVersion
             desc = libraryDescription
@@ -147,4 +115,45 @@ bintray {
     }
 }
 
-apply from: 'https://raw.githubusercontent.com/nisrulz/JCenter/master/installv1.gradle'
+// from https://raw.githubusercontent.com/nisrulz/JCenter/master/installv1.gradle
+// inlined for consistency
+group = publishedGroupId                               // Maven Group ID for the artifact
+
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                groupId publishedGroupId
+                artifactId artifact
+
+                // Add your description here
+                name libraryName
+                description libraryDescription
+                url siteUrl
+
+                // Set your license
+                licenses {
+                    license {
+                        name licenseName
+                        url licenseUrl
+                    }
+                }
+                developers {
+                    developer {
+                        id developerId
+                        name developerName
+                        email developerEmail
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+
+                }
+            }
+        }
+    }
+}
