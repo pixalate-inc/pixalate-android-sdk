@@ -12,6 +12,24 @@ import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
 
 public final class Pixalate {
+    public enum LogLevel {
+        NONE(0),
+        INFO(1),
+        DEBUG(2);
+
+        private int severity;
+
+        LogLevel ( int severity ) {
+            this.severity = severity;
+        }
+
+        public boolean includes ( LogLevel other ) {
+            return this.severity >= other.severity;
+        }
+    }
+
+    static final String TAG = "pxsdk";
+
     public static final String CLIENT_ID = "clid";
     public static final String PLATFORM_ID = "paid";
     public static final String ADVERTISER_ID = "avid";
@@ -53,10 +71,13 @@ public final class Pixalate {
 
     public static final String CACHE_BUSTER = "cb";
 
-
-
+    static final String S8_FLAG = "dvid";
 
     private static final String baseImpressionURL = "https://adrta.com/i?";
+
+    static LogLevel logLevel = LogLevel.INFO;
+
+    static int backoffCount = 5;
 
 
     Pixalate() {}
@@ -69,6 +90,26 @@ public final class Pixalate {
         SendRequestTask sendRequestTask = new SendRequestTask();
 
         sendRequestTask.execute( buildImpressionUrl( impression ) );
+    }
+
+    /**
+     * Sets the level to which debug statements should be logged to the console.
+     * @param level The LogLevel to use.
+     */
+    public static void setLogLevel ( LogLevel level ) {
+        logLevel = level;
+    }
+
+    static void Log ( LogLevel level, String message ) {
+        if( logLevel.includes( level ) ) {
+            Log.d( TAG, message );
+        }
+    }
+
+    static void LogError ( LogLevel level, String message ) {
+        if( logLevel.includes( level ) ) {
+            Log.e( TAG, message );
+        }
     }
 
     private static String buildImpressionUrl ( Impression impression ) {
@@ -92,6 +133,7 @@ public final class Pixalate {
          */
         public ImpressionBuilder ( String clientId ) {
             parameters.put( Pixalate.CLIENT_ID, clientId );
+            parameters.put( Pixalate.DEVICE_OS, "Android" );
         }
 
         /**
@@ -107,7 +149,44 @@ public final class Pixalate {
         }
 
         /**
-         * Build the Pixalate.
+         * Gets a parameter that's been set on the impression.
+         * @param name The name of the parameter to get.
+         * @return The value of the parameter, if it exists.
+         */
+        public String getParameter ( String name ) {
+            return parameters.get( name );
+        }
+
+        /**
+         * Remove a parameter that's been set on the impression.
+         * @param name The name of the parameter to remove.
+         * @return This builder instance for chaining purposes.
+         */
+        public ImpressionBuilder removeParameter ( String name ) {
+            parameters.remove( name );
+
+            return this;
+        }
+
+        /**
+         * Marks this impression as being for a video ad. This acts as a shorthand to set several boilerplate parameters at once.
+         * @param isVideo Whether this is a video ad or not.
+         * @return This builder instance for chaining purposes.
+         */
+        public ImpressionBuilder setIsVideo ( boolean isVideo ) {
+            if( isVideo ) {
+                setParameter( Pixalate.SUPPLY_TYPE, "InApp_Video" );
+                setParameter( Pixalate.S8_FLAG, "v" );
+            } else {
+                removeParameter( Pixalate.SUPPLY_TYPE );
+                removeParameter( Pixalate.S8_FLAG );
+            }
+
+            return this;
+        }
+
+        /**
+         * Builds the Pixalate.Impression
          * @return The Pixalate instance.
          */
         public Pixalate.Impression build () {
@@ -121,6 +200,8 @@ public final class Pixalate {
 
     public static class Impression {
         HashMap<String,String> parameters = new HashMap<>();
+
+        Impression () {}
 
         /**
          * Retrieves a parameter that has been set on this impression.
@@ -137,14 +218,25 @@ public final class Pixalate {
 
         @Override
         protected Boolean doInBackground ( String... urls ) {
-            try {
-                URL url = new URL( urls[ 0 ] );
+            for( int i = 0; i < backoffCount; i++ ) {
+                try {
+                    URL url = new URL( urls[ 0 ] );
 
-                Log.d( "PX", urls[ 0 ] );
+                    Log( LogLevel.DEBUG, urls[ 0 ] );
 
-                return sendImpression( url, true );
-            } catch( Exception e ) {
-                e.printStackTrace();
+                    return sendImpression( url, true );
+                } catch( Exception e ) {
+                    if( i == backoffCount - 1 ) {
+                        Log( LogLevel.INFO, "An error occurred when attempting to send the ping." );
+                        LogError( LogLevel.DEBUG, Log.getStackTraceString( e ));
+
+                        return false;
+                    } else {
+                        try {
+                            Thread.sleep( ( (int)Math.round( Math.pow( 2, i + 1 ) ) * 1000 ) );
+                        } catch( InterruptedException ignored ) {}
+                    }
+                }
             }
 
             return false;
@@ -161,7 +253,7 @@ public final class Pixalate {
 
                 int status = connection.getResponseCode();
 
-                Log.d( "PX", String.valueOf(status));
+                Log( LogLevel.DEBUG,  String.format( "Impression response: %s", status ) );
 
                 if( status != HttpsURLConnection.HTTP_OK ) {
                     if ( followRedirects && status == HttpsURLConnection.HTTP_MOVED_TEMP
@@ -172,7 +264,7 @@ public final class Pixalate {
 
                         return sendImpression( new URL( redirectUrl ), false );
                     } else {
-                        throw new IOException("HTTPS Error: " + status);
+                        throw new IOException( "HTTPS Error: " + status );
                     }
                 }
             } finally {

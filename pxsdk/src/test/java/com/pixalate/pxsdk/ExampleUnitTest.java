@@ -1,4 +1,4 @@
-package com.pixalate.pixalate_android_sdk;
+package com.pixalate.pxsdk;
 
 import org.junit.Test;
 

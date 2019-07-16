@@ -127,9 +127,9 @@ bintray {
 
     configurations = ['archives']
     pkg {
-        repo = bintrayRepo
+        repo = 'pixalate-android-sdk'
         name = 'com.pixalate.pxsdk'
-        userOrg = userOrg
+        userOrg = 'pixalate'
         desc = libraryDescription
         licenses = allLicenses
         vcsUrl = gitUrl
