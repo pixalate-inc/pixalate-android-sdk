@@ -83,16 +83,6 @@ public final class Pixalate {
     Pixalate() {}
 
     /**
-     * Sends the given impression to Pixalate as a url. You can create impressions with ImpressionBuilder.
-     * @param impression The built impression to send.
-     */
-    public static void sendImpression ( Impression impression ) {
-        SendRequestTask sendRequestTask = new SendRequestTask();
-
-        sendRequestTask.execute( buildImpressionUrl( impression ) );
-    }
-
-    /**
      * Sets the level to which debug statements should be logged to the console.
      * @param level The LogLevel to use.
      */
@@ -100,16 +90,14 @@ public final class Pixalate {
         logLevel = level;
     }
 
-    static void Log ( LogLevel level, String message ) {
-        if( logLevel.includes( level ) ) {
-            Log.d( TAG, message );
-        }
-    }
+    /**
+     * Sends the given impression to Pixalate as a url. You can create impressions with ImpressionBuilder.
+     * @param impression The built impression to send.
+     */
+    public static void sendImpression ( Impression impression ) {
+        SendRequestTask sendRequestTask = new SendRequestTask();
 
-    static void LogError ( LogLevel level, String message ) {
-        if( logLevel.includes( level ) ) {
-            Log.e( TAG, message );
-        }
+        sendRequestTask.execute( buildImpressionUrl( impression ) );
     }
 
     private static String buildImpressionUrl ( Impression impression ) {
@@ -123,17 +111,23 @@ public final class Pixalate {
         return uri.build().toString();
     }
 
+    /**
+     * A utility class to help construct impressions.
+     */
     public static class ImpressionBuilder {
-
         private HashMap<String,String> parameters = new HashMap<>();
 
         /**
-         * A utility class to help construct impressions.
          * @param clientId The Pixalate client id under which pings should be sent.
          */
         public ImpressionBuilder ( String clientId ) {
-            parameters.put( Pixalate.CLIENT_ID, clientId );
-            parameters.put( Pixalate.DEVICE_OS, "Android" );
+            applyDefaults( clientId );
+        }
+
+        void applyDefaults ( String clientId ) {
+            setParameter( Pixalate.CLIENT_ID, clientId );
+            setParameter( Pixalate.DEVICE_OS, "Android" );
+            setParameter( Pixalate.SUPPLY_TYPE, "InApp" );
         }
 
         /**
@@ -157,6 +151,12 @@ public final class Pixalate {
             return parameters.get( name );
         }
 
+        ImpressionBuilder clear () {
+            parameters.clear();
+
+            return this;
+        }
+
         /**
          * Remove a parameter that's been set on the impression.
          * @param name The name of the parameter to remove.
@@ -169,7 +169,22 @@ public final class Pixalate {
         }
 
         /**
+         * Clears all parameters from this impression builder, barring a few constants.
+         * @return This builder instance for chaining purposes.
+         */
+        public ImpressionBuilder reset () {
+            String clientId = getParameter( CLIENT_ID );
+
+            clear();
+
+            applyDefaults( clientId );
+
+            return this;
+        }
+
+        /**
          * Marks this impression as being for a video ad. This acts as a shorthand to set several boilerplate parameters at once.
+         * Impressions are marked as being non-video by default.
          * @param isVideo Whether this is a video ad or not.
          * @return This builder instance for chaining purposes.
          */
@@ -178,7 +193,7 @@ public final class Pixalate {
                 setParameter( Pixalate.SUPPLY_TYPE, "InApp_Video" );
                 setParameter( Pixalate.S8_FLAG, "v" );
             } else {
-                removeParameter( Pixalate.SUPPLY_TYPE );
+                setParameter( Pixalate.SUPPLY_TYPE, "InApp" );
                 removeParameter( Pixalate.S8_FLAG );
             }
 
@@ -198,6 +213,27 @@ public final class Pixalate {
     }
 
 
+    static void Log ( LogLevel level, String message ) {
+        if( logLevel.includes( level ) ) {
+            Log.d( TAG, message );
+        }
+    }
+
+    static void LogError ( LogLevel level, String message ) {
+        if( logLevel.includes( level ) ) {
+            Log.e( TAG, message );
+        }
+    }
+
+    static void LogWarning ( LogLevel level, String message ) {
+        if( logLevel.includes( level ) ) {
+            Log.w( TAG, message );
+        }
+    }
+
+    /**
+     * An immutable impression that is used to send data to Pixalate.
+     */
     public static class Impression {
         HashMap<String,String> parameters = new HashMap<>();
 
