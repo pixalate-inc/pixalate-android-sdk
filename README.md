@@ -1,3 +1,3 @@
-# pxsdk-temp
+# pxsdk-android
 
-Temporary home for the pxsdk project.
+Impression reporting library for android apps, by Pixalate, Inc.
