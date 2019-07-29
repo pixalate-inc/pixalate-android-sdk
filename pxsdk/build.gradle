@@ -84,11 +84,29 @@ artifacts {
 
 // Bintray
 Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def propertiesFile = project.rootProject.file( 'local.properties' )
+
+def bintrayEnvUser = System.getenv( 'BINTRAY_USER' )
+def bintrayEnvKey  = System.getenv( 'BINTRAY_API_KEY' )
+
+def bintrayLocalUser
+def bintrayLocalKey
+def bintrayGPG
+if( propertiesFile.exists() ) {
+    properties.load( propertiesFile.newDataInputStream() )
+    bintrayLocalUser = properties.getProperty( "bintray.user" )
+    bintrayLocalKey  = properties.getProperty( "bintray.apikey" )
+    bintrayGPG       = properties.getProperty( "bintray.gpg.password" )
+}
+
+ext.bintrayUser = bintrayLocalUser != null ? bintrayLocalUser : bintrayEnvUser
+ext.bintrayKey  = bintrayLocalKey  != null ? bintrayLocalKey  : bintrayEnvKey
+
+if( ext.bintrayUser == null || ext.bintrayKey == null ) throw new InvalidUserDataException( 'No variable defined' )
 
 bintray {
-    user = properties.getProperty("bintray.user")
-    key = properties.getProperty("bintray.apikey")
+    user = bintrayUser
+    key  = bintrayKey
 
     configurations = ['archives']
     pkg {
@@ -107,8 +125,8 @@ bintray {
             name = libraryVersion
             desc = libraryDescription
             gpg {
-                sign = true //Determines whether to GPG sign the files. The default is false
-                passphrase = properties.getProperty("bintray.gpg.password")
+                sign = bintrayGPG != null ? true : false //Determines whether to GPG sign the files. The default is false
+                passphrase = bintrayGPG
                 //Optional. The passphrase for GPG signing'
             }
         }
