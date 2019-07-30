@@ -69,8 +69,7 @@ public final class Pixalate {
 
     public static final String VIDEO_PLAY_STATUS = "kv44";
 
-    public static final String CACHE_BUSTER = "cb";
-
+    static final String CACHE_BUSTER = "cb";
     static final String S8_FLAG = "dvid";
 
     private static final String baseImpressionURL = "https://adrta.com/i?";
