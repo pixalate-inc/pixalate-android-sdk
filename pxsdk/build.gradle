@@ -17,7 +17,7 @@ ext {
     gitUrl = 'https://github.com/Madgvox/pxsdk-temp.git'
     githubRepository= 'Madgvox/pxsdk-temp'
 
-    libraryVersion = '0.2.1'
+    libraryVersion = '0.2.2'
 
     developerId = 'pixalate'
     developerName = 'Nate Tessman'
