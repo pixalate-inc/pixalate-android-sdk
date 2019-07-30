@@ -6,16 +6,18 @@
 image: mingc/android-build-box:latest
 
 pipelines:
-  custom:
-    deploy:
-      - step:
-          script:
-            - chmod +x ./gradlew
-            - ./gradlew clean build install bintrayUpload
-
   branches:
     develop:
       - step:
           script:
             - chmod +x ./gradlew
             - ./gradlew clean build install
+    master:
+      - step:
+          script:
+            - chmod +x ./gradlew
+            - ./gradlew clean build install
+      - step:
+          trigger: manual
+          script:
+            - ./gradlew bintrayUpload
