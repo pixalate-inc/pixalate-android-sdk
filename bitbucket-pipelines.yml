@@ -20,6 +20,8 @@ pipelines:
           artifacts:
             - pxsdk/build/outputs/**
       - step:
+          name: Deploy to bintray
+          deployment: production
           trigger: manual
           script:
             - chmod +x ./gradlew
