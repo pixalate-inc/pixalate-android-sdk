@@ -17,7 +17,10 @@ pipelines:
           script:
             - chmod +x ./gradlew
             - ./gradlew clean build install
+          artifacts:
+            - pxsdk/build/outputs/*
       - step:
           trigger: manual
           script:
+            - chmod +x ./gradlew
             - ./gradlew bintrayUpload
