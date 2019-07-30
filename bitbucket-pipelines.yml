@@ -18,7 +18,7 @@ pipelines:
             - chmod +x ./gradlew
             - ./gradlew clean build install
           artifacts:
-            - pxsdk/build/outputs/*
+            - pxsdk/build/outputs/**
       - step:
           trigger: manual
           script:
