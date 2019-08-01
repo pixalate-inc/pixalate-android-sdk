@@ -284,7 +284,7 @@ public final class Pixalate {
                 connection = (HttpsURLConnection) url.openConnection();
 
                 connection.setInstanceFollowRedirects( followRedirects );
-                connection.setRequestMethod( "GET" );
+                connection.setRequestMethod( "HEAD" );
 
                 int status = connection.getResponseCode();
 
