@@ -9,18 +9,30 @@ pipelines:
   pull-requests:
     develop:
       - step:
+          caches:
+            - gradle
+            - gradlewrapper
+            - androidavd
           script:
             - chmod +x ./gradlew
             - ./gradlew clean build install
   branches:
     master:
       - step:
+          caches:
+            - gradle
+            - gradlewrapper
+            - androidavd
           script:
             - chmod +x ./gradlew
             - ./gradlew clean build install
           artifacts:
             - pxsdk/build/outputs/**
       - step:
+          caches:
+            - gradle
+            - gradlewrapper
+            - androidavd
           name: Deploy to bintray
           deployment: production
           trigger: manual
