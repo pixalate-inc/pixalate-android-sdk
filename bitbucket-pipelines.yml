@@ -6,12 +6,13 @@
 image: mingc/android-build-box:latest
 
 pipelines:
-  branches:
+  pull-requests:
     develop:
       - step:
           script:
             - chmod +x ./gradlew
             - ./gradlew clean build install
+  branches:
     master:
       - step:
           script:
