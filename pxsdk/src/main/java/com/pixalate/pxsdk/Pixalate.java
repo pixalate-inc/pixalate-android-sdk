@@ -30,7 +30,6 @@ public final class Pixalate {
 
     static final String TAG = "pxsdk";
 
-    public static final String CLIENT_ID = "clid";
     public static final String PLATFORM_ID = "paid";
     public static final String ADVERTISER_ID = "avid";
     public static final String CAMPAIGN_ID = "caid";
@@ -61,14 +60,16 @@ public final class Pixalate {
     public static final String DEVICE_ID = "kv19";
 
     public static final String CARRIER_ID = "kv23";
-    public static final String SUPPLY_TYPE = "kv24";
     public static final String APP_NAME = "kv25";
-    public static final String DEVICE_OS = "kv26";
     public static final String USER_AGENT = "kv27";
     public static final String DEVICE_MODEL = "kv28";
 
     public static final String VIDEO_PLAY_STATUS = "kv44";
 
+    // internal keys
+    static final String DEVICE_OS = "kv26";
+    static final String CLIENT_ID = "clid";
+    static final String SUPPLY_TYPE = "kv24";
     static final String CACHE_BUSTER = "cb";
     static final String S8_FLAG = "dvid";
 
@@ -116,17 +117,17 @@ public final class Pixalate {
     public static class ImpressionBuilder {
         private HashMap<String,String> parameters = new HashMap<>();
 
+        // don't let the clientId be removed
+        private String clientId;
+
+        private Boolean isVideo;
+
         /**
          * @param clientId The Pixalate client id under which pings should be sent.
          */
         public ImpressionBuilder ( String clientId ) {
-            applyDefaults( clientId );
-        }
-
-        void applyDefaults ( String clientId ) {
-            setParameter( Pixalate.CLIENT_ID, clientId );
-            setParameter( Pixalate.DEVICE_OS, "Android" );
-            setParameter( Pixalate.SUPPLY_TYPE, "InApp" );
+            this.clientId = clientId;
+            isVideo = false;
         }
 
         /**
@@ -168,15 +169,13 @@ public final class Pixalate {
         }
 
         /**
-         * Clears all parameters from this impression builder, barring a few constants.
+         * Clears all parameters from this impression builder, barring a few internal constants.
          * @return This builder instance for chaining purposes.
          */
         public ImpressionBuilder reset () {
-            String clientId = getParameter( CLIENT_ID );
-
             clear();
 
-            applyDefaults( clientId );
+            isVideo = false;
 
             return this;
         }
@@ -188,13 +187,7 @@ public final class Pixalate {
          * @return This builder instance for chaining purposes.
          */
         public ImpressionBuilder setIsVideo ( boolean isVideo ) {
-            if( isVideo ) {
-                setParameter( Pixalate.SUPPLY_TYPE, "InApp_Video" );
-                setParameter( Pixalate.S8_FLAG, "v" );
-            } else {
-                setParameter( Pixalate.SUPPLY_TYPE, "InApp" );
-                removeParameter( Pixalate.S8_FLAG );
-            }
+            this.isVideo = isVideo;
 
             return this;
         }
@@ -205,6 +198,16 @@ public final class Pixalate {
          */
         public Pixalate.Impression build () {
             Pixalate.Impression imp = new Pixalate.Impression();
+            imp.parameters.put( Pixalate.CLIENT_ID, clientId );
+            imp.parameters.put( Pixalate.DEVICE_OS, "Android" );
+
+            if( isVideo ) {
+                imp.parameters.put( Pixalate.SUPPLY_TYPE, "InApp_Video" );
+                imp.parameters.put( Pixalate.S8_FLAG, "v" );
+            } else {
+                imp.parameters.put( Pixalate.SUPPLY_TYPE, "InApp" );
+            }
+
             imp.parameters.put( Pixalate.CACHE_BUSTER, String.valueOf( Math.floor( Math.random() * 999999 ) ) );
             imp.parameters.putAll( parameters );
             return imp;
@@ -284,7 +287,7 @@ public final class Pixalate {
                 connection = (HttpsURLConnection) url.openConnection();
 
                 connection.setInstanceFollowRedirects( followRedirects );
-                connection.setRequestMethod( "GET" );
+                connection.setRequestMethod( "HEAD" );
 
                 int status = connection.getResponseCode();
 
