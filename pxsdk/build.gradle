@@ -49,7 +49,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
 }
 
 dependencies {
@@ -61,6 +60,7 @@ dependencies {
     testImplementation 'org.powermock:powermock-module-junit4-rule-agent:1.6.2'
     testImplementation 'org.powermock:powermock-module-junit4-rule:1.6.2'
     testImplementation 'org.powermock:powermock-module-junit4:1.6.2'
+    testImplementation 'androidx.test:runner:1.2.0'
 }
 
 // from https://raw.githubusercontent.com/nisrulz/JCenter/master/bintrayv1.gradle
@@ -108,7 +108,7 @@ ext.bintrayUser = bintrayLocalUser != null ? bintrayLocalUser : bintrayEnvUser
 ext.bintrayKey  = bintrayLocalKey  != null ? bintrayLocalKey  : bintrayEnvKey
 
 if( ext.bintrayUser == null || ext.bintrayKey == null )
-    throw new InvalidUserDataException( 'No bintray user defined in local.properties or in environment variables.' )
+    throw new Exception( 'No bintray user defined in local.properties or in environment variables.' )
 
 bintray {
     user = bintrayUser
@@ -131,7 +131,8 @@ bintray {
             name = libraryVersion
             desc = libraryDescription
             gpg {
-                sign = bintrayGPG != null ? true : false //Determines whether to GPG sign the files. The default is false
+                sign = bintrayGPG != null
+                //Determines whether to GPG sign the files. The default is false
                 passphrase = bintrayGPG
                 //Optional. The passphrase for GPG signing'
             }
