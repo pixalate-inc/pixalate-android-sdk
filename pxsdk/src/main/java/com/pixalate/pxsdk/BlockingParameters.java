@@ -17,15 +17,15 @@ public final class BlockingParameters {
         return userAgent;
     }
 
-    public boolean usingIp () {
+    boolean usingIp () {
         return ip != null && !ip.equals( "" );
     }
 
-    public boolean usingDeviceId () {
+    boolean usingDeviceId () {
         return deviceId != null && !deviceId.equals( "" );
     }
 
-    public boolean usingUserAgent () {
+    boolean usingUserAgent () {
         return userAgent != null && !userAgent.equals( "" );
     }
 
@@ -59,11 +59,42 @@ public final class BlockingParameters {
 
         public BlockingParameters build () {
             BlockingParameters params = new BlockingParameters();
+
             params.ip = ip;
             params.deviceId = deviceId;
             params.userAgent = userAgent;
 
+
+            if( !params.usingDeviceId() && !params.usingUserAgent() && !params.usingIp() ) {
+                throw new IllegalArgumentException( "You must include at least one of the three parameters before building the BlockingParameters object!   " );
+            }
+
             return params;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BlockingParameters parameters = (BlockingParameters) o;
+        return equals(ip,parameters.ip) &&
+                equals(deviceId,parameters.deviceId) &&
+                equals(userAgent,parameters.userAgent);
+    }
+
+    boolean equals( Object a, Object b ) {
+        return ( a == b ) || ( a != null && a.equals( b ) );
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 1;
+
+        result = 31 * result + (ip == null ? 0 : ip.hashCode());
+        result = 31 * result + (deviceId == null ? 0 : deviceId.hashCode());
+        result = 31 * result + (userAgent == null ? 0 : userAgent.hashCode());
+
+        return result;
     }
 }

@@ -1,7 +1,5 @@
 package com.pixalate.pxsdk;
 
-import android.util.Log;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -14,7 +12,7 @@ public class BlockingConfigBuilderTest {
 
     @Test
     public void defaultParameters () {
-        BlockingConfig result = new BlockingConfig.Builder( "jason", "test" )
+        PixalateConfig result = new PixalateConfig.Builder( "jason", "test" )
             .build();
 
         assertEquals( result.getUsername(), "jason" );
@@ -24,7 +22,7 @@ public class BlockingConfigBuilderTest {
 
     @Test
     public void modifiedThreshold () {
-        BlockingConfig result = new BlockingConfig.Builder( "jason", "test" )
+        PixalateConfig result = new PixalateConfig.Builder( "jason", "test" )
             .setThreshold( 0.9 )
             .build();
 
@@ -36,7 +34,7 @@ public class BlockingConfigBuilderTest {
     @Test
     public void invalidLowThresholdShouldThrow () {
         exception.expect( IllegalArgumentException.class );
-        BlockingConfig result = new BlockingConfig.Builder( "jason", "test" )
+        PixalateConfig result = new PixalateConfig.Builder( "jason", "test" )
             .setThreshold( 0 )
             .build();
     }
@@ -44,7 +42,7 @@ public class BlockingConfigBuilderTest {
     @Test
     public void invalidHighThresholdShouldThrow () {
         exception.expect( IllegalArgumentException.class );
-        BlockingConfig result = new BlockingConfig.Builder( "jason", "test" )
+        PixalateConfig result = new PixalateConfig.Builder( "jason", "test" )
             .setThreshold( 1.1 )
             .build();
     }

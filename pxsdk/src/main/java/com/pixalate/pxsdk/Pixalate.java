@@ -1,10 +1,7 @@
 package com.pixalate.pxsdk;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.provider.Settings;
 import android.util.JsonReader;
 import android.util.Log;
 
@@ -13,7 +10,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -201,26 +200,49 @@ public final class Pixalate {
 
 
 
-    static BlockingConfig blockingConfig;
+    static HashMap<BlockingParameters,BlockingResult> cachedResults = new HashMap<>();
 
-    public static void setBlockingConfig ( BlockingConfig config ) {
-        blockingConfig = config;
+    static PixalateConfig globalConfig;
+
+    public static void initialize ( PixalateConfig config ) {
+        globalConfig = config;
     }
 
-    public static BlockingConfig getBlockingConfig () {
-        return blockingConfig;
+    public static PixalateConfig getGlobalConfig () {
+        return globalConfig;
     }
 
     /**
-     *
+     * Requests a block status for the given parameters. If anything goes wrong with the request, eg. incorrect login details, it will
+     * return an onError result in the listener. Otherwise, it will use the set threshold to compare probabilities and return a positive
+     * or negative result in onAllow and onBlock respectively.
      * @param parameters The blocking parameters to check for.
      * @param listener The listener will be called with the results of the request.
      */
     public static void requestBlockStatus ( BlockingParameters parameters, BlockingStatusListener listener ) throws IllegalStateException {
-        SendFraudRequestTask task = new SendFraudRequestTask( listener );
+        SendFraudRequestTask task = new SendFraudRequestTask( parameters, listener );
 
-        if( blockingConfig == null ) {
-            throw new IllegalStateException( "You must set the global blocking config using `Pixalate.setBlockingConfig` before requesting block status." );
+        if( globalConfig == null ) {
+            throw new IllegalStateException( "You must set the global blocking config using `Pixalate.initialize` before requesting block status." );
+        }
+
+        if( globalConfig.cacheAge > 0 ) {
+            BlockingResult result = cachedResults.get(parameters);
+
+            if (result != null) {
+                if (result.time > new Date().getTime()) {
+                    Log(LogLevel.DEBUG, "Using cached results.");
+
+                    if (result.probability > globalConfig.threshold) {
+                        listener.onBlock();
+                    } else {
+                        listener.onAllow();
+                    }
+                    return;
+                } else {
+                    cachedResults.remove(parameters);
+                }
+            }
         }
 
         task.execute( buildBlockUrl( parameters ) );
@@ -230,8 +252,8 @@ public final class Pixalate {
         Uri.Builder uri = Uri.parse( baseFraudURL )
             .buildUpon();
 
-        uri.appendQueryParameter( "username", blockingConfig.getUsername() );
-        uri.appendQueryParameter( "password", blockingConfig.getPassword() );
+        uri.appendQueryParameter( "username", globalConfig.getUsername() );
+        uri.appendQueryParameter( "password", globalConfig.getPassword() );
 
         if( parameters.usingIp() ) uri.appendQueryParameter( "ip", parameters.getIp() );
         if( parameters.usingDeviceId() ) uri.appendQueryParameter( "deviceId", parameters.getDeviceId() );
@@ -246,8 +268,19 @@ public final class Pixalate {
         int errorCode = -1;
         double probability = -1;
 
+        long time;
+
         public boolean hasError () {
             return errorCode > -1;
+        }
+    }
+
+    static class RequestErrorException extends Exception {
+        public int status;
+
+        public RequestErrorException ( int status, String message ) {
+            super( message );
+            this.status = status;
         }
     }
 
@@ -255,8 +288,11 @@ public final class Pixalate {
 
         BlockingStatusListener listener;
 
-        public SendFraudRequestTask ( BlockingStatusListener listener ) {
+        BlockingParameters parameters;
+
+        public SendFraudRequestTask ( BlockingParameters parameters, BlockingStatusListener listener ) {
             this.listener = listener;
+            this.parameters = parameters;
         }
 
         @Override
@@ -269,20 +305,31 @@ public final class Pixalate {
 
                     return sendRequest( url );
                 } catch ( Exception e ) {
-                    if( i == backoffCount - 1 ) {
+                    BlockingResult result = new BlockingResult();
 
-                        BlockingResult result = new BlockingResult();
-                        if( e instanceof SocketTimeoutException ) {
-                            result.errorCode = 408;
-                            result.message = "The request timed out.";
-                        } else {
-                            result.errorCode = 500;
-                            result.message = "An error occurred when attempting to send the request.";
+                    result.errorCode = 500;
+                    result.message = "An unknown error occurred when attempting to send the request.";
+
+                    if( e instanceof SocketTimeoutException ) {
+                        result.errorCode = 408;
+                        result.message = "The request timed out.";
+                        return result;
+                    }
+
+                    if( e instanceof RequestErrorException ) {
+                        result.errorCode = ((RequestErrorException) e).status;
+
+                        if( result.errorCode == 401 || result.errorCode == 403 ) {
+                            result.message = "Incorrect authentication details.";
                         }
 
+                        // @todo: there are perhaps other statuses we need to cover for
+                        return result;
+                    }
+
+                    if( i == backoffCount - 1 ) {
                         Log( LogLevel.INFO, result.message );
                         LogError( LogLevel.DEBUG, Log.getStackTraceString( e ));
-
                         return result;
                     } else {
                         try {
@@ -301,7 +348,13 @@ public final class Pixalate {
                 LogError( LogLevel.INFO, String.format( "Error getting data: %s %s", result.errorCode, result.message ) );
                 listener.onError( result.errorCode, result.message );
             } else {
-                if( result.probability > blockingConfig.threshold ) {
+                result.time = new Date().getTime() + globalConfig.cacheAge;
+                cachedResults.put( parameters, result );
+                Log( LogLevel.DEBUG, "CACHING PARAMS" );
+                BlockingResult res = cachedResults.get( parameters );
+                Log( LogLevel.DEBUG, String.valueOf(res));
+
+                if( result.probability > globalConfig.threshold ) {
                     listener.onBlock();
                 } else {
                     listener.onAllow();
@@ -309,19 +362,25 @@ public final class Pixalate {
             }
         }
 
-        private BlockingResult sendRequest ( URL url ) throws IOException {
+        private BlockingResult sendRequest ( URL url ) throws IOException, RequestErrorException {
             HttpsURLConnection connection = null;
+
+            long time = new Date().getTime();
+
+            // @note: There's a possibility that the HTTPS connection will take seconds to connect --
+            // As far as I can tell this is limited to being an emulator-only issue.
 
             try {
                 connection = (HttpsURLConnection) url.openConnection();
 
                 connection.setRequestMethod( "GET" );
-                connection.setConnectTimeout( blockingConfig.requestTimeout );
+                connection.setConnectTimeout( globalConfig.requestTimeout );
 
                 int connStatus = connection.getResponseCode();
 
-                if( connStatus != HttpsURLConnection.HTTP_OK ) {
-                    throw new IOException( "HTTPS Error: " + connStatus );
+                // There shouldn't be any need for redirect management w/ this api.
+                if( connStatus != 200 ) {
+                    throw new RequestErrorException( connStatus, "HTTPS Error" );
                 }
 
                 InputStream in = connection.getInputStream();
