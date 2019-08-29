@@ -27,7 +27,7 @@ public final class PixalateConfig {
         return cacheAge;
     }
 
-    //    public boolean getUseSystemDeviceId () {
+//    public boolean getUseSystemDeviceId () {
 //        return useSystemDeviceId;
 //    }
 
@@ -41,11 +41,11 @@ public final class PixalateConfig {
     public static final class Builder {
         private final String password;
         private final String username;
-        private final long cacheAge;
 
         private int requestTimeout;
 
         private double threshold;
+        private long cacheAge;
 
         public Builder ( String username, String password ) {
             this.username = username;
@@ -76,7 +76,20 @@ public final class PixalateConfig {
          * @return This builder instance for chaining purposes.
          */
         public Builder setRequestTimeout ( int timeout ) {
+            if( timeout < 0 ) timeout = 0;
             this.requestTimeout = timeout;
+
+            return this;
+        }
+
+        /**
+         * The maximum time that a cached blocking result should be stored in the cache.
+         * @param cacheAge The cache age value in milliseconds.
+         * @return This builder instance for chaining purposes.
+         */
+        public Builder setCacheAge ( int cacheAge ) {
+            if( cacheAge < 0 ) cacheAge = 0;
+            this.cacheAge = cacheAge;
 
             return this;
         }

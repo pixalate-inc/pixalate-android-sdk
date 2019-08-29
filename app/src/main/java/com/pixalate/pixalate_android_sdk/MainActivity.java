@@ -27,12 +27,16 @@ public class MainActivity extends AppCompatActivity {
 
         final TextView txt = findViewById( R.id.result );
 
+        Log.d( "PX", "BLAH" );
+
         allowedBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
                 BlockingParameters parameters = new BlockingParameters.Builder()
                         .setUserAgent( "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36" )
                         .build();
+
+                Log.d( "PX", "HIT BUTT" );
 
                 Pixalate.requestBlockStatus( parameters,
                         new BlockingStatusListener() {
@@ -89,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
         Pixalate.initialize( new PixalateConfig.Builder( "jason", "test" )
             .setThreshold( 0.75 )
+            .setCacheAge( 1000 * 5 )
             .build() );
 
 
