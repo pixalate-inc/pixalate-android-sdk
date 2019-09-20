@@ -41,6 +41,7 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
+        consumerProguardFiles 'proguard.txt'
     }
 
     buildTypes {
@@ -53,13 +54,13 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
 
     testImplementation 'junit:junit:4.12'
-    testImplementation 'org.powermock:powermock-api-mockito:1.6.2'
+    testImplementation 'org.powermock:powermock-api-mockito:1.7.4'
     testImplementation 'org.powermock:powermock-module-junit4-rule-agent:1.6.2'
-    testImplementation 'org.powermock:powermock-module-junit4-rule:1.6.2'
-    testImplementation 'org.powermock:powermock-module-junit4:1.6.2'
+    testImplementation 'org.powermock:powermock-module-junit4-rule:1.7.4'
+    testImplementation 'org.powermock:powermock-module-junit4:1.7.4'
     testImplementation 'androidx.test:runner:1.2.0'
 }
 

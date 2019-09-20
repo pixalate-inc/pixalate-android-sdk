@@ -1,1 +1,1 @@
-include ':app', ':pxsdk'
+include ':pxsdk-sample', ':pxsdk'
