@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">Sample App Android</string>
-    <string name="action_settings">Settings</string>
+    <string name="app_name">Pixalate SDK Sample</string>
     <string name="mopub_test_banner_320x250">252412d5e9364a05ab77d9396346d73d</string>
 </resources>
