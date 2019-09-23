@@ -31,6 +31,8 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads-identifier:17.0.0'
     implementation 'com.google.android.gms:play-services-base:17.1.0'
 
+    implementation project( ':pxsdk' )
+
     implementation('com.mopub:mopub-sdk:+@aar') {
         transitive = true
     }
