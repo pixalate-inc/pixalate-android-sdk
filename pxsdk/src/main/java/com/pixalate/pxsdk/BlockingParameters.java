@@ -29,6 +29,31 @@ public final class BlockingParameters {
         return userAgent != null && !userAgent.equals( "" );
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BlockingParameters parameters = (BlockingParameters) o;
+        return equals(ip,parameters.ip) &&
+                equals(deviceId,parameters.deviceId) &&
+                equals(userAgent,parameters.userAgent);
+    }
+
+    boolean equals( Object a, Object b ) {
+        return ( a == b ) || ( a != null && a.equals( b ) );
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 1;
+
+        result = 31 * result + (ip == null ? 0 : ip.hashCode());
+        result = 31 * result + (deviceId == null ? 0 : deviceId.hashCode());
+        result = 31 * result + (userAgent == null ? 0 : userAgent.hashCode());
+
+        return result;
+    }
+
     /**
      * Helper class for building BlockingParameter objects.
      */

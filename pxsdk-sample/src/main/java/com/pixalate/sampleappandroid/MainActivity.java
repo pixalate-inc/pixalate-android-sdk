@@ -1,12 +1,8 @@
 package com.pixalate.sampleappandroid;
 
 import android.annotation.SuppressLint;
-import android.os.AsyncTask;
 import android.os.Bundle;
 
-import com.google.android.gms.ads.identifier.AdvertisingIdClient;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.mopub.common.MoPub;
 import com.mopub.common.SdkConfiguration;
 import com.mopub.common.SdkInitializationListener;
@@ -21,11 +17,8 @@ import com.pixalate.pxsdk.PixalateConfig;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.Debug;
 import android.provider.Settings;
 import android.util.Log;
-
-import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "PXSampleApp";
@@ -50,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
                 Pixalate.requestBlockStatus( new BlockingParameters.Builder()
                         .setDeviceId( deviceId )
                         .setUserAgent( "Bot Googlebot/2.1 (iPod; N; RISC OS 2.4.35; IBM360; rv1.3.1) Alligator/20080524 Jungledog/3.0" )
-                        .build(), new MainBlockListener() );
+                        .build(), new BlockStatusListener() );
             }
         });
 
@@ -82,10 +75,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadAd() {
         moPubView.loadAd();
-        moPubView.setBannerAdListener( new MainAdListener() );
+        moPubView.setBannerAdListener( new BannerAdListener() );
     }
 
-    private class MainBlockListener implements BlockingStatusListener {
+    private class BlockStatusListener implements BlockingStatusListener {
         @Override
         public void onBlock () {
             moPubView.destroy();
@@ -106,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class MainAdListener implements MoPubView.BannerAdListener {
+    private class BannerAdListener implements MoPubView.BannerAdListener {
 
         @Override
         public void onBannerLoaded ( MoPubView banner ) {
@@ -119,23 +112,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBannerFailed(MoPubView banner, MoPubErrorCode errorCode) {
-
-        }
-
+        public void onBannerFailed(MoPubView banner, MoPubErrorCode errorCode) {}
         @Override
-        public void onBannerClicked(MoPubView banner) {
-
-        }
-
+        public void onBannerClicked(MoPubView banner) {}
         @Override
-        public void onBannerExpanded(MoPubView banner) {
-
-        }
-
+        public void onBannerExpanded(MoPubView banner) {}
         @Override
-        public void onBannerCollapsed(MoPubView banner) {
-
-        }
+        public void onBannerCollapsed(MoPubView banner) {}
     }
 }
