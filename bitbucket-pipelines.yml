@@ -14,7 +14,7 @@ pipelines:
             - gradlewrapper
           script:
             - chmod +x ./gradlew
-            - ./gradlew clean build install
+            - ./gradlew clean :pxsdk:build :pxsdk:install
   branches:
     master:
       - step:
@@ -23,7 +23,7 @@ pipelines:
             - gradlewrapper
           script:
             - chmod +x ./gradlew
-            - ./gradlew clean build install
+            - ./gradlew clean :pxsdk:build :pxsdk:install
           artifacts:
             - pxsdk/build/outputs/**
       - step:
@@ -35,7 +35,7 @@ pipelines:
           trigger: manual
           script:
             - chmod +x ./gradlew
-            - ./gradlew bintrayUpload
+            - ./gradlew :pxsdk:bintrayUpload
 definitions:
  caches:
    gradlewrapper: ~/.gradle/wrapper
