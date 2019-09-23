@@ -12,7 +12,6 @@ pipelines:
           caches:
             - gradle
             - gradlewrapper
-            - androidavd
           script:
             - chmod +x ./gradlew
             - ./gradlew clean build install
@@ -22,7 +21,6 @@ pipelines:
           caches:
             - gradle
             - gradlewrapper
-            - androidavd
           script:
             - chmod +x ./gradlew
             - ./gradlew clean build install
@@ -32,10 +30,12 @@ pipelines:
           caches:
             - gradle
             - gradlewrapper
-            - androidavd
           name: Deploy to bintray
           deployment: production
           trigger: manual
           script:
             - chmod +x ./gradlew
             - ./gradlew bintrayUpload
+definitions:
+ caches:
+   gradlewrapper: ~/.gradle/wrapper
